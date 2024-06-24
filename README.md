@@ -112,7 +112,7 @@ python setup.py develop
 3. To train GridFormer, run
 ```
 cd GridFormer
-./train.sh options\train\GridFormer\Dehazing\SOTS-Indoor\GridFormer_SOTS-Indoor.yml
+./train.sh options/train/GridFormer/Dehazing/SOTS-Indoor/GridFormer_SOTS-Indoor.yml
 ```
 **Note:** The above training script uses 8 GPUs by default. To use any other number of GPUs, modify [GridFormer/train.sh](./train.sh) and [GridFormer_SOTS-Indoor.yml](./options/train/GridFormer/Dehazing/SOTS-Indoor/GridFormer_SOTS-Indoor.yml)
 

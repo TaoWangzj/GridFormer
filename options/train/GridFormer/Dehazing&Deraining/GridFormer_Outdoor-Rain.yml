@@ -1,0 +1,134 @@
+# GENERATE TIME: Sun Feb 12 15:15:20 2023
+# CMD:
+# basicsr/train.py -opt options/train/GridFormer/Deraining/GridFormer_Outdoor-Rain_v5_10_18_arch.yml
+
+# general settings
+name: Deraining_GridFormer_Outdoor-Rain
+model_type: MIMOModel
+scale: 1
+num_gpu: 1
+manual_seed: 100
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: TrainSet_Outdoor-Rain
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/Outdoor-Rain/train/target
+    dataroot_lq: datasets/Outdoor-Rain/train/input
+    geometric_augs: true
+    meta_info_file: ~
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    io_memory: False
+    gt_size: 256
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 12
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  val:
+    name: ValSet_Outdoor-Rain-test1
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/Outdoor-Rain/test1/target
+    dataroot_lq: datasets/Outdoor-Rain/test1/input
+    io_backend:
+      type: disk
+    io_memory: False
+
+# network structures
+network_g:
+  type: GridFormer
+  in_channels: 3
+  out_channels: 3
+  dim: 48
+  kernel_size: 3
+  stride: 2
+  height: 3
+  width: 6
+  num_blocks: [1,2,4]
+  heads: [2,4,8]
+  attention: True
+  windows: 4
+  sample_rate_trunk: [4,2,2]
+  scale: 1
+# path
+path:
+  pretrain_network_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: !!float 1e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: TrueCosineAnnealingLR
+    T_max: 1200000
+    eta_min: !!float 1e-6
+
+
+  total_iter: 1200000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: CharbonnierLoss
+    loss_weight: 1.0
+    reduction: mean
+
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      'conv5_4': 1  # before relu
+    vgg_type: vgg19
+    use_input_norm: true
+    range_norm: false
+    perceptual_weight: 0.1
+    style_weight: 0
+    criterion: l1
+
+# validation settings
+val:
+  window_size: 4
+  val_freq: !!float 4000
+  save_img: false
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: true
+      better: higher  # the higher, the better. Default: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: true
+      better: higher  # the higher, the better. Default: higher
+
+
+# logging settings
+logger:
+  print_freq: 1000
+  save_checkpoint_freq: !!float 4000
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

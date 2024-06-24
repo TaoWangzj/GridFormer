@@ -1,0 +1,117 @@
+# general settings
+name: GridFormer_Mullti_weather_Restoration
+model_type: MIMOModel
+scale: 1
+num_gpu: 1
+manual_seed: 100
+
+# dataset and data loader settings
+datasets: 
+  test_1:
+    name: ValSet_Snow100K-S
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/Snow100K-S/gt
+    dataroot_lq: datasets/Snow100K-S/synthetic
+    io_backend:
+      type: disk
+  
+  test_2: 
+    name: ValSet_Snow100K-L
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/Snow100K-L/gt
+    dataroot_lq: datasets/Snow100K-L/synthetic
+    io_backend:
+      type: disk
+
+  test_3:
+    name: ValSet_RainDrop
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/allweather/test_a/target
+    dataroot_lq: datasets/allweather/test_a/input
+    io_backend:
+      type: disk
+
+  test_4:
+    name: ValSet_Outdoor-Rain-test1
+    type: Dataset_PairedImage
+    dataroot_gt: datasets/allweather/test1/target
+    dataroot_lq: datasets/allweather/test1/input
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: GridFormer_v15
+  in_channels: 3
+  out_channels: 3
+  dim: 48
+  kernel_size: 3
+  stride: 2
+  height: 3
+  width: 6
+  num_blocks: [1,2,4]
+  heads: [2,4,8]
+  attention: True
+  windows: 4
+  sample_rate_trunk: [4,2,2]
+  scale: 1
+
+# path
+path:
+  pretrain_network_g: ./checkpoints/Multi_weather_Restoration/net_g_best.pth
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: AdamW
+    lr: !!float 3e-4
+    weight_decay: !!float 1e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: TrueCosineAnnealingLR
+    T_max: 400000
+    eta_min: !!float 1e-6
+
+
+  total_iter: 400000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: CharbonnierLoss
+    loss_weight: 1.0
+    reduction: mean
+    
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      'conv5_4': 1  # before relu
+    vgg_type: vgg19
+    use_input_norm: true
+    range_norm: false
+    perceptual_weight: 0.1
+    style_weight: 0
+    criterion: l1
+
+# validation settings
+val:
+  window_size: 4
+  save_img: False
+  suffix: result
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: True
+      better: higher  # the higher, the better. Default: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: True
+      better: higher  # the higher, the better. Default: higher

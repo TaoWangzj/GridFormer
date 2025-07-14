@@ -130,11 +130,14 @@ python basic/test.py -opt  options/test/GridFormer/Dehazing/SOTS-Indoor/GridForm
 If you use GridFormer, please consider citing:
 
     @article{wang2024gridformer,
-        title={Gridformer: Residual dense transformer with grid structure for image restoration in adverse weather conditions}, 
+        title={GridFormer: Residual dense transformer with grid structure for image restoration in adverse weather conditions}, 
         author={Gridformer: Residual dense transformer with grid structure for image restoration in adverse weather conditions},
         journal={International Journal of Computer Vision},
-        pages={1--23},
+        volume={132},
+        number={10},
+        pages={4541--4563},
         year={2024}
+        publisher={Springer}
     }
 
 ## Contact
